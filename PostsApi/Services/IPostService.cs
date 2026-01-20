@@ -12,4 +12,7 @@ public interface IPostService
     Task<PostResponseDto?> GetPostByIdAsync(int id);
     Task<IEnumerable<PostResponseDto>> GetPostsByUserAsync(int userId);
     Task<UserSummaryDto?> GetUserSummaryAsync(int userId);
+    Task<PostResponseDto> CreatePostAsync(string title, string content, int userId);
+    Task<PostResponseDto> UpdatePostAsync(int id, string title, string content);
+    Task<bool> DeletePostAsync(int id);
 }
