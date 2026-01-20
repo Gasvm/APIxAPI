@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using PostsApi.Services;
+using PostsApi.DTOs;
 
 namespace PostsApi.Controllers;
 
@@ -53,7 +54,7 @@ public class PostsController : ControllerBase
         try
         {
             var post = await _postService.GetPostByIdAsync(id);
-            
+
             if (post == null)
                 return NotFound(new { message = $"Post con ID {id} no encontrado" });
 
@@ -84,6 +85,80 @@ public class PostsController : ControllerBase
         {
             _logger.LogError(ex, "Error al obtener posts del usuario {UserId}", userId);
             return StatusCode(500, new { error = "Error al procesar la solicitud" });
+        }
+    }
+
+    /// <summary>
+    /// Crea un nuevo post
+    /// POST /api/posts
+    /// </summary>
+    [HttpPost]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> CreatePost([FromBody] CreatePostDto dto)
+    {
+        try
+        {
+            var post = await _postService.CreatePostAsync(dto.Title, dto.Content, dto.UserId);
+            return CreatedAtAction(nameof(GetPostById), new { id = post.Id }, post);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al crear post");
+            return StatusCode(500, new { error = "Error al crear el post" });
+        }
+    }
+
+    /// <summary>
+    /// Actualiza un post existente
+    /// PUT /api/posts/{id}
+    /// </summary>
+    [HttpPut("{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> UpdatePost(int id, [FromBody] UpdatePostDto dto)
+    {
+        try
+        {
+            var post = await _postService.UpdatePostAsync(id, dto.Title, dto.Content);
+            return Ok(post);
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Post {PostId} no encontrado", id);
+            return NotFound(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al actualizar post {PostId}", id);
+            return StatusCode(500, new { error = "Error al actualizar el post" });
+        }
+    }
+
+    /// <summary>
+    /// Elimina un post
+    /// DELETE /api/posts/{id}
+    /// </summary>
+    [HttpDelete("{id}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> DeletePost(int id)
+    {
+        try
+        {
+            var deleted = await _postService.DeletePostAsync(id);
+
+            if (!deleted)
+                return NotFound(new { message = $"Post con ID {id} no encontrado" });
+
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al eliminar post {PostId}", id);
+            return StatusCode(500, new { error = "Error al eliminar el post" });
         }
     }
 }
