@@ -14,4 +14,7 @@ public interface IJsonPlaceholderRepository
     Task<IEnumerable<Post>> GetPostsByUserIdAsync(int userId);
     Task<User?> GetUserByIdAsync(int id);
     Task<IEnumerable<User>> GetAllUsersAsync();
+    Task<Post> CreatePostAsync(Post post);
+    Task<Post> UpdatePostAsync(int id, Post post);
+    Task<bool> DeletePostAsync(int id);
 }
