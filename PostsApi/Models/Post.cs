@@ -1,0 +1,12 @@
+namespace PostsApi.Models;
+
+/// <summary>
+/// Representa un post tal como lo devuelve la API externa JSONPlaceholder
+/// </summary>
+public class Post
+{
+    public int Id { get; set; }
+    public int UserId { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string Body { get; set; } = string.Empty;
+}
