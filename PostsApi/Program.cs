@@ -23,6 +23,7 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 // Registro de servicios con inyección de dependencias
 builder.Services.AddScoped<IPostService, PostService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 // Configuración de CORS (para permitir llamadas desde frontend)
 builder.Services.AddCors(options =>
