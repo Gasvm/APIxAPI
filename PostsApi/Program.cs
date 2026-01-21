@@ -8,13 +8,18 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Configuración de HttpClient para el repositorio
-builder.Services.AddHttpClient<IJsonPlaceholderRepository, JsonPlaceholderRepository>(client =>
+// ===== HttpClient nombrado compartido =====
+// Registramos UN cliente HTTP con nombre que TODOS los repositories usarán
+builder.Services.AddHttpClient("JsonPlaceholder", client =>
 {
     client.BaseAddress = new Uri("https://jsonplaceholder.typicode.com/");
     client.Timeout = TimeSpan.FromSeconds(30);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
+
+// Registrar Repositories como Scoped (reciben IHttpClientFactory)
+builder.Services.AddScoped<IPostRepository, PostRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 // Registro de servicios con inyección de dependencias
 builder.Services.AddScoped<IPostService, PostService>();

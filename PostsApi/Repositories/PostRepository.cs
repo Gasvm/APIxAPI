@@ -5,31 +5,36 @@ using System.Text;
 namespace PostsApi.Repositories;
 
 /// <summary>
-/// Implementación que consume la API JSONPlaceholder
+/// Repositorio de Posts que consume JSONPlaceholder
+/// Cambio clave: Ahora usa IHttpClientFactory con cliente nombrado
 /// </summary>
-public class JsonPlaceholderRepository : IJsonPlaceholderRepository
+public class PostRepository : IPostRepository
 {
     private readonly HttpClient _httpClient;
-    private readonly ILogger<JsonPlaceholderRepository> _logger;
+    private readonly ILogger<PostRepository> _logger;
 
-    public JsonPlaceholderRepository(
-        HttpClient httpClient,
-        ILogger<JsonPlaceholderRepository> logger)
+    // CAMBIO IMPORTANTE: Constructor ahora recibe IHttpClientFactory
+    public PostRepository(
+        IHttpClientFactory httpClientFactory, 
+        ILogger<PostRepository> logger)
     {
-        _httpClient = httpClient;
+        // Obtener el cliente nombrado "JsonPlaceholder"
+        _httpClient = httpClientFactory.CreateClient("JsonPlaceholder");
         _logger = logger;
     }
 
+    // ===== MÉTODOS IGUAL QUE ANTES =====
+    
     public async Task<IEnumerable<Post>> GetAllPostsAsync()
     {
         try
         {
             var response = await _httpClient.GetAsync("posts");
             response.EnsureSuccessStatusCode();
-
+            
             var content = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<IEnumerable<Post>>(content,
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+            return JsonSerializer.Deserialize<IEnumerable<Post>>(content, 
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) 
                 ?? Enumerable.Empty<Post>();
         }
         catch (HttpRequestException ex)
@@ -44,14 +49,14 @@ public class JsonPlaceholderRepository : IJsonPlaceholderRepository
         try
         {
             var response = await _httpClient.GetAsync($"posts/{id}");
-
+            
             if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
                 return null;
-
+            
             response.EnsureSuccessStatusCode();
-
+            
             var content = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<Post>(content,
+            return JsonSerializer.Deserialize<Post>(content, 
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         }
         catch (HttpRequestException ex)
@@ -67,10 +72,10 @@ public class JsonPlaceholderRepository : IJsonPlaceholderRepository
         {
             var response = await _httpClient.GetAsync($"posts?userId={userId}");
             response.EnsureSuccessStatusCode();
-
+            
             var content = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<IEnumerable<Post>>(content,
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+            return JsonSerializer.Deserialize<IEnumerable<Post>>(content, 
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) 
                 ?? Enumerable.Empty<Post>();
         }
         catch (HttpRequestException ex)
@@ -80,60 +85,16 @@ public class JsonPlaceholderRepository : IJsonPlaceholderRepository
         }
     }
 
-    public async Task<User?> GetUserByIdAsync(int id)
-    {
-        try
-        {
-            var response = await _httpClient.GetAsync($"users/{id}");
-
-            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-                return null;
-
-            response.EnsureSuccessStatusCode();
-
-            var content = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<User>(content,
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-        }
-        catch (HttpRequestException ex)
-        {
-            _logger.LogError(ex, "Error al obtener usuario {UserId}", id);
-            throw new InvalidOperationException($"No se pudo recuperar el usuario {id}", ex);
-        }
-    }
-
-    public async Task<IEnumerable<User>> GetAllUsersAsync()
-    {
-        try
-        {
-            var response = await _httpClient.GetAsync("users");
-            response.EnsureSuccessStatusCode();
-
-            var content = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<IEnumerable<User>>(content,
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
-                ?? Enumerable.Empty<User>();
-        }
-        catch (HttpRequestException ex)
-        {
-            _logger.LogError(ex, "Error al obtener usuarios de la API externa");
-            throw new InvalidOperationException("No se pudieron recuperar los usuarios", ex);
-        }
-    }
-
     public async Task<Post> CreatePostAsync(Post post)
     {
         try
         {
-            // Serializar el post a JSON
             var json = JsonSerializer.Serialize(post);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-            // Hacer POST a la API
+            
             var response = await _httpClient.PostAsync("posts", content);
             response.EnsureSuccessStatusCode();
-
-            // Deserializar la respuesta
+            
             var responseContent = await response.Content.ReadAsStringAsync();
             return JsonSerializer.Deserialize<Post>(responseContent,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
@@ -150,15 +111,12 @@ public class JsonPlaceholderRepository : IJsonPlaceholderRepository
     {
         try
         {
-            // Serializar el post a JSON
             var json = JsonSerializer.Serialize(post);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-            // Hacer PUT a la API
+            
             var response = await _httpClient.PutAsync($"posts/{id}", content);
             response.EnsureSuccessStatusCode();
-
-            // Deserializar la respuesta
+            
             var responseContent = await response.Content.ReadAsStringAsync();
             return JsonSerializer.Deserialize<Post>(responseContent,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
@@ -175,7 +133,6 @@ public class JsonPlaceholderRepository : IJsonPlaceholderRepository
     {
         try
         {
-            // Hacer DELETE a la API
             var response = await _httpClient.DeleteAsync($"posts/{id}");
             return response.IsSuccessStatusCode;
         }
